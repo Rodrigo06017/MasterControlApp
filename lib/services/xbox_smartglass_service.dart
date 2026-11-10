@@ -10,6 +10,7 @@ class XboxSmartGlassService {
   static const String bridgeBaseUrl = 'http://127.0.0.1:5555';
   RawDatagramSocket? _udpSocket;
   Process? _bridgeProcess;
+  Timer? _statusSyncTimer;
   XboxDevice? _connectedDevice;
   bool _isConnected = false;
 
@@ -208,6 +209,7 @@ class XboxSmartGlassService {
 
         _connectedDevice = device.copyWith(name: consoleName, isConnected: true);
         _isConnected = true;
+        _startStatusSync();
         debugPrint('[XboxService] Conexión establecida con $consoleName (${device.ip})');
         return true;
       } else {
@@ -258,7 +260,29 @@ class XboxSmartGlassService {
     debugPrint('[XboxService] Comando media local: $commandName');
   }
 
+  void _startStatusSync() {
+    _statusSyncTimer?.cancel();
+    _statusSyncTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
+      if (_isConnected) {
+        try {
+          final req = await _httpClient.getUrl(Uri.parse('$bridgeBaseUrl/status'));
+          final res = await req.close();
+          if (res.statusCode == 200) {
+            final body = await res.transform(utf8.decoder).join();
+            final json = jsonDecode(body) as Map<String, dynamic>;
+            final bool isConn = json['connected'] as bool? ?? false;
+            if (!isConn && _isConnected) {
+              debugPrint('[XboxService] Bridge reconectando con la consola...');
+            }
+          }
+        } catch (_) {}
+      }
+    });
+  }
+
   Future<void> disconnect() async {
+    _statusSyncTimer?.cancel();
+    _statusSyncTimer = null;
     try {
       final req = await _httpClient.postUrl(Uri.parse('$bridgeBaseUrl/disconnect'));
       await req.close();
