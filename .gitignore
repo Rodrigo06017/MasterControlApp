@@ -39,3 +39,8 @@ undecorated_symbol_map.yaml
 # Local env files
 .env
 .env.*
+
+# Node modules
+node_modules/
+server/node_modules/
+
