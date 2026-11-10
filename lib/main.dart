@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -8,15 +10,21 @@ import 'views/screens/controller_screen.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Edge-to-edge styling with dark system bars
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: XboxTheme.background,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
+  // Platform-specific system UI overlay (Only valid on mobile Android/iOS)
+  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+    try {
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: XboxTheme.background,
+          systemNavigationBarIconBrightness: Brightness.light,
+        ),
+      );
+    } catch (e) {
+      debugPrint('SystemUiOverlayStyle not supported on this platform: $e');
+    }
+  }
 
   runApp(const MasterControlApp());
 }

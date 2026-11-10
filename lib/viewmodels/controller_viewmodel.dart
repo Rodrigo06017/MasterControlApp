@@ -44,9 +44,23 @@ class ControllerViewModel extends ChangeNotifier {
     });
   }
 
+  void _triggerHaptic([String type = 'light']) {
+    try {
+      if (type == 'medium') {
+        HapticFeedback.mediumImpact();
+      } else if (type == 'heavy') {
+        HapticFeedback.heavyImpact();
+      } else if (type == 'selection') {
+        HapticFeedback.selectionClick();
+      } else {
+        HapticFeedback.lightImpact();
+      }
+    } catch (_) {}
+  }
+
   void setMode(ControllerMode mode) {
     _currentMode = mode;
-    HapticFeedback.selectionClick();
+    _triggerHaptic('selection');
     notifyListeners();
   }
 
@@ -69,7 +83,7 @@ class ControllerViewModel extends ChangeNotifier {
   Future<bool> connectTo(XboxDevice device) async {
     _connectionState = ConnectionStateEnum.connecting;
     _statusMessage = 'Conectando a ${device.name} (${device.ip})...';
-    HapticFeedback.lightImpact();
+    _triggerHaptic('light');
     notifyListeners();
 
     final success = await _smartGlassService.connectToDevice(device);
@@ -77,12 +91,12 @@ class ControllerViewModel extends ChangeNotifier {
       _connectionState = ConnectionStateEnum.connected;
       _activeDevice = device.copyWith(isConnected: true);
       _statusMessage = 'Conectado a ${device.name}';
-      HapticFeedback.mediumImpact();
+      _triggerHaptic('medium');
     } else {
       _connectionState = ConnectionStateEnum.disconnected;
       _activeDevice = null;
       _statusMessage = 'No se pudo conectar a ${device.ip}. Revisa las opciones de conexión en tu Xbox.';
-      HapticFeedback.heavyImpact();
+      _triggerHaptic('heavy');
     }
 
     notifyListeners();
@@ -107,12 +121,12 @@ class ControllerViewModel extends ChangeNotifier {
     _connectionState = ConnectionStateEnum.disconnected;
     _activeDevice = null;
     _statusMessage = 'Desconectado';
-    HapticFeedback.selectionClick();
+    _triggerHaptic('selection');
     notifyListeners();
   }
 
   void pressButton(XboxButton button) {
-    HapticFeedback.lightImpact();
+    _triggerHaptic('light');
     _pressedButtons.add(button);
     notifyListeners();
 
@@ -126,7 +140,7 @@ class ControllerViewModel extends ChangeNotifier {
   }
 
   void pressMediaCommand(XboxMediaCommand command) {
-    HapticFeedback.lightImpact();
+    _triggerHaptic('light');
     _pressedButtons.add(command);
     notifyListeners();
 
